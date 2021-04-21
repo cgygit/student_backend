@@ -1,12 +1,10 @@
 package com.example.demo.service;
 
 import com.example.demo.dao.UserDao;
-import com.example.demo.pojo.User;
-import com.example.demo.result.Result;
+import com.example.demo.entity.User;
+import com.example.demo.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @Service
 public class LoginService<UserDAO> {
@@ -17,7 +15,7 @@ public class LoginService<UserDAO> {
     public Result login(User requestUser) {
         String username = requestUser.getUsername();
         String password = requestUser.getPassword();
-        User user = userDao.getByUsernameAndPassword(username,password);
+        User user = userDao.findByUsernameAndPassword(username,password);
 
         if (null == user) {
             return new Result(400);

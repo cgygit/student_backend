@@ -1,4 +1,4 @@
-package com.example.demo.pojo;
+package com.example.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -14,6 +14,7 @@ public class User {
     int id;
     String username;
     String password;
+    String course;
 
     public int getId() {
         return id;
@@ -37,6 +38,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getCourse() {
+        return course;
+    }
+
+    public void setCourse(String course) {
+        this.course = course;
     }
 }
 

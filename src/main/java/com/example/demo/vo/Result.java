@@ -1,4 +1,4 @@
-package com.example.demo.result;
+package com.example.demo.vo;
 
 public class Result {
     //响应码
