@@ -2,6 +2,8 @@ package com.example.demo.utils;
 
 
 import com.example.demo.vo.SheetContent;
+import com.example.demo.vo.Student;
+import com.example.demo.vo.StudentResult;
 import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -10,8 +12,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.jsp.jstl.sql.Result;
 import javax.servlet.jsp.jstl.sql.ResultSupport;
 import java.sql.*;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SqlUtil {
     // 对应数据库配置 在application.properties
@@ -182,6 +183,112 @@ public class SqlUtil {
         Statement stat = conn.createStatement();
 
         // todo
+    }
+
+    public StudentResult getStudentList(String courseName) throws ClassNotFoundException, SQLException {
+        StudentResult studentResult = new StudentResult();
+        studentResult.setCode(400);
+        List<Map<String,String>> list = new ArrayList<Map<String,String>>();
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        String sql = "select * from " + courseName + "_" + courseName + "_数据汇总;";
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        String[] colName = result.getColumnNames();
+
+        if(result!=null && result.getRowCount()!=0){
+            studentResult.setCode(200);
+            for(int i=0 ; i<result.getRowCount(); i++){
+                Map<String,String> student = new LinkedHashMap<String,String>();
+                Map row = result.getRows()[i];
+                String stuId = row.get(colName[1]).toString();
+                student.put(colName[1], stuId);
+                String score = row.get(colName[2]).toString();
+                student.put(colName[2], score);
+                String page = row.get(colName[3]).toString();
+                student.put(colName[3], page);
+                String attendance = row.get(colName[4]).toString();
+                student.put(colName[4], attendance);
+                String barrage = row.get(colName[6]).toString();
+                student.put(colName[6], barrage);
+                String submission = row.get(colName[7]).toString();
+                student.put(colName[7], submission);
+                String announcement = row.get(colName[8]).toString();
+                student.put(colName[8], announcement);
+
+                list.add(student);
+
+//                Student student = new Student();
+//                Map row = result.getRows()[i];
+//                String stuId = row.get(colName[1]).toString();
+//                int score = Integer.parseInt(row.get(colName[2]).toString());
+//                int page = Integer.parseInt(row.get(colName[3]).toString());
+//                int attendance = Integer.parseInt(row.get(colName[4]).toString());
+//                int barrage = Integer.parseInt(row.get(colName[6]).toString());
+//                int submission = Integer.parseInt(row.get(colName[7]).toString());
+//                int announcement = Integer.parseInt(row.get(colName[8]).toString());
+//                student.setStuId(stuId);
+//                student.setScore(score);
+//                student.setPage(page);
+//                student.setAttendance(attendance);
+//                student.setBarrage(barrage);
+//                student.setSubmission(submission);
+//                student.setAnnouncement(announcement);
+//                students.add(student);
+
+//                student.setCol1(colName[1]);
+//                student.setCol2(colName[2]);
+//                student.setCol3(colName[3]);
+//                student.setCol4(colName[4]);
+//                student.setCol6(colName[6]);
+//                student.setCol7(colName[7]);
+//                student.setCol8(colName[8]);
+            }
+            studentResult.setStudents(list);
+            studentResult.setTotal(result.getRowCount());
+        }
+
+        return studentResult;
+    }
+
+    public StudentResult getStudentByID(String courseName, String stuID) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        StudentResult studentResult = new StudentResult();
+        String sql = "select * from " + courseName + "_" + courseName + "_数据汇总 where 学号='" + stuID + "';";
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        Map row = result.getRows()[0];  // 学号不重复 只有一行
+        String[] colName = result.getColumnNames();
+
+        List<Map<String,String>> list = new ArrayList<Map<String,String>>();
+        Map<String,String> student = new LinkedHashMap<String,String>();
+        String stuId = row.get(colName[1]).toString();
+        student.put(colName[1], stuId);
+        String score = row.get(colName[2]).toString();
+        student.put(colName[2], score);
+        String page = row.get(colName[3]).toString();
+        student.put(colName[3], page);
+        String attendance = row.get(colName[4]).toString();
+        student.put(colName[4], attendance);
+        String barrage = row.get(colName[6]).toString();
+        student.put(colName[6], barrage);
+        String submission = row.get(colName[7]).toString();
+        student.put(colName[7], submission);
+        String announcement = row.get(colName[8]).toString();
+        student.put(colName[8], announcement);
+        list.add(student);
+
+        studentResult.setStudents(list);
+        studentResult.setTotal(result.getRowCount());
+        studentResult.setCode(200);
+        return studentResult;
     }
 
 }
