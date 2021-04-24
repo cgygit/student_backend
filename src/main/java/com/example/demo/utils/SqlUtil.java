@@ -1,6 +1,7 @@
 package com.example.demo.utils;
 
 
+import com.example.demo.vo.ScoreResult;
 import com.example.demo.vo.SheetContent;
 import com.example.demo.vo.Student;
 import com.example.demo.vo.StudentResult;
@@ -18,7 +19,7 @@ public class SqlUtil {
     // 对应数据库配置 在application.properties
     private String driver = "com.mysql.jdbc.Driver";
 
-    private String url = "jdbc:mysql://127.0.0.1:3306/project?characterEncoding=UTF-8";
+    private String url = "jdbc:mysql://127.0.0.1:3306/project?characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
     private String userName = "root";
 
@@ -174,6 +175,10 @@ public class SqlUtil {
                 }
             }
         }
+
+        // 释放资源
+        stat.close();
+        conn.close();
     }
 
     public void updateByAdd(String course, List<String> tableNameList, List<String[]> headersList, List<List<Map<String, String>>> tableContentList) throws ClassNotFoundException, SQLException {
@@ -183,6 +188,10 @@ public class SqlUtil {
         Statement stat = conn.createStatement();
 
         // todo
+
+        // 释放资源
+        stat.close();
+        conn.close();
     }
 
     public StudentResult getStudentList(String courseName) throws ClassNotFoundException, SQLException {
@@ -250,6 +259,9 @@ public class SqlUtil {
             studentResult.setStudents(list);
             studentResult.setTotal(result.getRowCount());
         }
+        // 释放资源
+        stat.close();
+        conn.close();
 
         return studentResult;
     }
@@ -288,7 +300,221 @@ public class SqlUtil {
         studentResult.setStudents(list);
         studentResult.setTotal(result.getRowCount());
         studentResult.setCode(200);
+
+        // 释放资源
+        stat.close();
+        conn.close();
         return studentResult;
+    }
+
+    public int getNumberFromStr(String str) {
+        int number = 0;
+        List<Integer> numbers = new ArrayList<Integer>();
+        for (int i = 0; i < str.length(); i ++) {
+            char x = str.charAt(i);
+            if(x >= 48 && x <= 57) {
+                numbers.add(x-'0');
+            }
+        }
+
+        int k = 1;
+        for (int i = numbers.size()-1; i >= 0; i --) {
+            number += numbers.get(i)*k;
+            k *= 10;
+        }
+        return number;
+    }
+
+    public float getScore(String term, int total, Object weight) {
+        float score = 0;
+        if (total != 0) {
+            score = (Float.parseFloat(term)/total)*100*Float.parseFloat(weight.toString());
+        }
+        // 如果总分为0 如通告数 则记满分
+        else {
+            score = 100*Float.parseFloat(weight.toString());
+        }
+        return score;
+    }
+
+    public ScoreResult getScoreList(String courseName, Map<Object,Object> setting) throws ClassNotFoundException, SQLException {
+        ScoreResult scoreResult = new ScoreResult();
+        scoreResult.setCode(400);
+        List<Map<String,String>> list = new ArrayList<Map<String,String>>();
+
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+
+        String sql = "select * from " + courseName + "_" + courseName + "_数据汇总;";
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        String[] colName = result.getColumnNames();
+
+        // 获得总分等信息
+        int totalPoint = getNumberFromStr(colName[2]);
+        int totalPage = getNumberFromStr(colName[3]);
+        int totalAttendance = getNumberFromStr(colName[4]);
+        int totalAnnouncement = getNumberFromStr(colName[8]);
+
+
+        if(result!=null && result.getRowCount()!=0){
+            scoreResult.setCode(200);
+            for(int i=0 ; i<result.getRowCount(); i++){
+                Map row = result.getRows()[i];
+                Map<String,String> student = new LinkedHashMap<String,String>();
+                String stuId = row.get(colName[1]).toString();
+                student.put(colName[1], stuId);
+                String point = row.get(colName[2]).toString();
+                student.put(colName[2], point);
+                String page = row.get(colName[3]).toString();
+                student.put(colName[3], page);
+                String attendance = row.get(colName[4]).toString();
+                student.put(colName[4], attendance);
+                String barrage = row.get(colName[6]).toString();
+                student.put(colName[6], barrage);
+                String submission = row.get(colName[7]).toString();
+                student.put(colName[7], submission);
+                String announcement = row.get(colName[8]).toString();
+                student.put(colName[8], announcement);
+
+
+                // 计算平均成绩
+                float average = getScore(point, totalPoint, setting.get("point"))
+                        + getScore(page, totalPage, setting.get("page"))
+                        + getScore(attendance, totalAttendance, setting.get("attendance"))
+                        + getScore(announcement, totalAnnouncement, setting.get("announcement"));
+
+
+                // 弹幕和投稿没有总分 用其他方式算
+                int ba = Integer.parseInt(barrage);
+                int su = Integer.parseInt(submission);
+                if(ba <= 10) {
+                    average += ba*10*Float.parseFloat(setting.get("barrage").toString());
+                }
+                else if(ba > 10) {
+                    average += 100*Float.parseFloat(setting.get("barrage").toString());
+                }
+                if(su <= 10) {
+                    average += su*10*Float.parseFloat(setting.get("submission").toString());
+                }
+                else if(su > 10) {
+                    average += 100*Float.parseFloat(setting.get("submission").toString());
+                }
+
+                student.put("平时成绩", String.format("%.2f", average));
+
+                list.add(student);
+            }
+            scoreResult.setScores(list);
+            scoreResult.setTotal(result.getRowCount());
+        }
+        // 释放资源
+        stat.close();
+        conn.close();
+
+        return scoreResult;
+    }
+
+    public int getTotalAttendance(String courseName,  String stuID) throws ClassNotFoundException, SQLException {
+        String[] colName = getColName(courseName,stuID);
+        int totalAttendance = getNumberFromStr(colName[4]);
+        return totalAttendance;
+    }
+
+    public String[] getColName(String courseName,  String stuID) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        String sql= "";
+        if(stuID.isEmpty()) {
+            sql = "select * from " + courseName + "_" + courseName + "_数据汇总;";
+        }
+        else {
+            sql = "select * from " + courseName + "_" + courseName + "_数据汇总 where 学号='" + stuID + "';";
+        }
+
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        String[] colName = result.getColumnNames();
+        return colName;
+    }
+
+    public ScoreResult getScoreById(String courseName, Map<Object,Object> setting, String stuID) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        ScoreResult scoreResult = new ScoreResult();
+        String sql = "select * from " + courseName + "_" + courseName + "_数据汇总 where 学号='" + stuID + "';";
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        Map row = result.getRows()[0];  // 学号不重复 只有一行
+        String[] colName = result.getColumnNames();
+
+        // 获得总分等信息
+        int totalPoint = getNumberFromStr(colName[2]);
+        int totalPage = getNumberFromStr(colName[3]);
+        int totalAttendance = getNumberFromStr(colName[4]);
+        int totalAnnouncement = getNumberFromStr(colName[8]);
+
+        List<Map<String,String>> list = new ArrayList<Map<String,String>>();
+        Map<String,String> student = new LinkedHashMap<String,String>();
+        String stuId = row.get(colName[1]).toString();
+        student.put(colName[1], stuId);
+        String point = row.get(colName[2]).toString();
+        student.put(colName[2], point);
+        String page = row.get(colName[3]).toString();
+        student.put(colName[3], page);
+        String attendance = row.get(colName[4]).toString();
+        student.put(colName[4], attendance);
+        String barrage = row.get(colName[6]).toString();
+        student.put(colName[6], barrage);
+        String submission = row.get(colName[7]).toString();
+        student.put(colName[7], submission);
+        String announcement = row.get(colName[8]).toString();
+        student.put(colName[8], announcement);
+
+        // 计算平均成绩
+        float average = getScore(point, totalPoint, setting.get("point"))
+                + getScore(page, totalPage, setting.get("page"))
+                + getScore(attendance, totalAttendance, setting.get("attendance"))
+                + getScore(announcement, totalAnnouncement, setting.get("announcement"));
+
+
+        // 弹幕和投稿没有总分 用其他方式算
+        int ba = Integer.parseInt(barrage);
+        int su = Integer.parseInt(submission);
+        if(ba <= 10) {
+            average += ba*10*Float.parseFloat(setting.get("barrage").toString());
+        }
+        else if(ba > 10) {
+            average += 100*Float.parseFloat(setting.get("barrage").toString());
+        }
+        if(su <= 10) {
+            average += su*10*Float.parseFloat(setting.get("submission").toString());
+        }
+        else if(su > 10) {
+            average += 100*Float.parseFloat(setting.get("submission").toString());
+        }
+
+        student.put("平时成绩", String.format("%.2f", average));
+
+        list.add(student);
+
+        scoreResult.setScores(list);
+        scoreResult.setTotal(result.getRowCount());
+        scoreResult.setCode(200);
+
+        // 释放资源
+        stat.close();
+        conn.close();
+        return scoreResult;
     }
 
 }
