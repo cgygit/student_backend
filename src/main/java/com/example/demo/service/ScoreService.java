@@ -37,7 +37,7 @@ public class ScoreService {
         List<Map<String,String>> scoreList = scores.getScores();
 
         SqlUtil sqlUtil = new SqlUtil();
-        String[] colName = sqlUtil.getColName(courseName,stuID);
+        String[] colName = sqlUtil.getColName(courseName);
 
         if(!point.isEmpty()) {
             // 遍历list  取反删除来实现
@@ -47,7 +47,7 @@ public class ScoreService {
             scoreList.removeIf(score -> Integer.parseInt(score.get(colName[3])) >= Integer.parseInt(page));
         }
         if(!attendance.isEmpty()) {  // 缺勤次数多于x 即 签到次数小于总-x 再取反
-            int totalAttendance = sqlUtil.getTotalAttendance(courseName, stuID);
+            int totalAttendance = sqlUtil.getTotalAttendance(courseName);
             scoreList.removeIf(score -> Integer.parseInt(score.get(colName[4])) >= (totalAttendance - Integer.parseInt(attendance)));
         }
         if(!barrage.isEmpty()) {

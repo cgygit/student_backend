@@ -418,25 +418,20 @@ public class SqlUtil {
         return scoreResult;
     }
 
-    public int getTotalAttendance(String courseName,  String stuID) throws ClassNotFoundException, SQLException {
-        String[] colName = getColName(courseName,stuID);
+    public int getTotalAttendance(String courseName) throws ClassNotFoundException, SQLException {
+        String[] colName = getColName(courseName);
         int totalAttendance = getNumberFromStr(colName[4]);
         return totalAttendance;
     }
 
-    public String[] getColName(String courseName,  String stuID) throws ClassNotFoundException, SQLException {
+    public String[] getColName(String courseName) throws ClassNotFoundException, SQLException {
         // 连接数据库
         Class.forName(driver);
         Connection conn = DriverManager.getConnection(url, userName, password);
         Statement stat = conn.createStatement();
 
         String sql= "";
-        if(stuID.isEmpty()) {
-            sql = "select * from " + courseName + "_" + courseName + "_数据汇总;";
-        }
-        else {
-            sql = "select * from " + courseName + "_" + courseName + "_数据汇总 where 学号='" + stuID + "';";
-        }
+        sql = "select * from " + courseName + "_" + courseName + "_数据汇总;";
 
         ResultSet rs = stat.executeQuery(sql);
         Result result = ResultSupport.toResult(rs);
