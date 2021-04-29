@@ -70,6 +70,13 @@ public class SqlUtil {
                     stat.executeUpdate(insertCommand);
                 }
 
+                // 数据统一化 解决异常情况
+                if(tableName.contains("课堂情况")) {
+                    if(!Arrays.asList(headers).contains("累计得分")) {
+                        String sql = "alter table " + tableName + " add 累计得分 varchar(100) default'0' ;";
+                        stat.executeUpdate(sql);
+                    }
+                }
             }
         }
         // 释放资源
@@ -436,6 +443,10 @@ public class SqlUtil {
         ResultSet rs = stat.executeQuery(sql);
         Result result = ResultSupport.toResult(rs);
         String[] colName = result.getColumnNames();
+
+        // 释放资源
+        stat.close();
+        conn.close();
         return colName;
     }
 
@@ -511,6 +522,167 @@ public class SqlUtil {
         conn.close();
         return scoreResult;
     }
+
+    /**
+    public List<String> getTableNameByType(String courseName, String type) throws ClassNotFoundException, SQLException {
+        List<String> list = new ArrayList<>();
+
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        String sql = "select table_name from information_schema.tables where table_schema='project';";
+        ResultSet rs = stat.executeQuery(sql);
+        Result result = ResultSupport.toResult(rs);
+        if(result!=null && result.getRowCount()!=0) {
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+                String table = row.get("table_name").toString();
+                if(table.contains(courseName) && table.contains(type)) {
+                    list.add(table);
+                }
+            }
+        }
+
+        // 释放资源
+        stat.close();
+        conn.close();
+        return list;
+    }
+     **/
+
+    public List<List<Integer>> getClassDataByTable(String courseName, List<String> tableList) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        List<List<Integer>> list = new ArrayList<>();
+        for(String tableName: tableList) {
+            String sql = "select * from " + tableName + " ;";
+            ResultSet rs = stat.executeQuery(sql);
+            Result result = ResultSupport.toResult(rs);
+
+            int attendance = result.getRowCount();     // 签到数
+            int submission = 0;                        // 投稿
+            int barrage = 0;                           // 弹幕
+            int point = 0;                             // 答题
+
+
+            List<Integer> data = new ArrayList<>();
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+
+                String attend = row.get("签到方式").toString();
+                if (attend.equals("未上课")) {
+                    attendance--;
+                }
+
+                String sub = row.get("投稿次数").toString();
+                submission += Integer.parseInt(sub);
+
+                String ba = row.get("弹幕次数").toString();
+                barrage += Integer.parseInt(ba);
+
+                String po = row.get("累计得分").toString();
+                point += Integer.parseInt(po);
+            }
+
+            data.add(attendance);
+            data.add(submission);
+            data.add(barrage);
+            data.add(point);
+
+            list.add(data);
+        }
+
+        // 释放资源
+        stat.close();
+        conn.close();
+        return list;
+    }
+
+    public List<List<Integer>> getBarDataOfClass(List<String> tableList) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        Integer a1 = 0;     // 未上课
+        Integer a2 = 0;     // 扫二维码
+        Integer a3 = 0;     // 课堂暗号
+        Integer a4 = 0;     // “正在上课”提示
+
+        Integer p1 = 0;     // 未答题
+        Integer p2 = 0;     // 答对
+        Integer p3 = 0;     // 答错
+
+        for(String table:tableList) {
+            String sql = "select * from " + table + " ;";
+            ResultSet rs = stat.executeQuery(sql);
+            Result result = ResultSupport.toResult(rs);
+
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+
+                if(row.get("签到方式").toString().equals("未上课")) {
+                    a1 ++;
+                }
+                else if(row.get("签到方式").toString().equals("扫二维码")) {
+                    a2 ++;
+                }
+                else if(row.get("签到方式").toString().equals("课堂暗号")) {
+                    a3 ++;
+                }
+                else  {
+                    a4 ++;
+                }
+
+                // 如果老师有发题
+                int cnt = result.getColumnNames().length;
+                if(cnt > 9) {
+                    String[] colName = result.getColumnNames();
+                    // “总分”在第10列 即colName[9] 则有cnt-10个题
+                    if(row.get("总分").toString().equals(String.valueOf(cnt-10))) {   // 所有题答对
+                        p2 = p2 + cnt - 10;
+                    }
+                    else {  // 不是所有题答对，可能答错，可能未答题   向右遍历
+                        int temp = 0;   // 存储这一行未答题的数量
+                        for(int j = 10; j < cnt; j ++) {
+                            if(row.get(colName[j]).toString().equals("未答题")) {
+                                temp ++;
+                            }
+                        }
+                        p1 = p1 + temp;
+                        p3 = p3 + cnt - Integer.parseInt(row.get("总分").toString()) - temp; // 答错=题数-答对数-未答数
+                    }
+                }
+            }
+        }
+
+        List<Integer> attandance = new ArrayList<>();
+        attandance.add(a1);
+        attandance.add(a2);
+        attandance.add(a3);
+        attandance.add(a4);
+
+        List<Integer> point = new ArrayList<>();
+        point.add(p1);
+        point.add(p2);
+        point.add(p3);
+
+        List<List<Integer>> list = new ArrayList<>();
+        list.add(attandance);
+        list.add(point);
+
+        // 释放资源
+        stat.close();
+        conn.close();
+
+        return list;
+    }
+
 
 }
 

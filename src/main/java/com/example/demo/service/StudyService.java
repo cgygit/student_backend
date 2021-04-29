@@ -111,7 +111,7 @@ public class StudyService {
                                 "{value:" + num2 + ", name:'类别三'}," +
                                 "{value:" + num3 + ", name:'类别四'}, ]," +
                         "emphasis: { itemStyle: {shadowBlur: 10,shadowOffsetX: 0,shadowColor: 'rgba(0, 0, 0, 0.5)' } } } ]," +
-                        "color:['rgb(58,71,133,0.82)', 'rgb(46,41,107,0.91)', 'rgb(216,184,219,0.7)', 'rgb(173,207,240,0.8)', ] }";
+                        "color:['rgb(21,13,125,0.57)', 'rgb(46,41,107,0.91)', 'rgb(216,184,219,0.7)', 'rgb(173,207,240,0.8)', ] }";
         JSONObject obj=JSON.parseObject(pieStr);
 
         // System.out.println(obj);
@@ -189,7 +189,7 @@ public class StudyService {
                                                                     averageList.get(3)[2] + "," + averageList.get(4)[2] + "," + averageList.get(5)[2] + "] }," +
                             "{ name:'类别四', type:'line', data:[" + averageList.get(0)[3] + "," + averageList.get(1)[3] + "," + averageList.get(2)[3] + "," +
                                                                     averageList.get(3)[3] + "," + averageList.get(4)[3] + "," + averageList.get(5)[3] + "] }]," +
-                    "color:['rgb(58,71,133,0.82)', 'rgb(46,41,107,0.91)', 'rgb(216,184,219,0.7)', 'rgb(173,207,240,0.8)', ]}";
+                    "color:['rgb(21,13,125,0.57)', 'rgb(46,41,107,0.91)', 'rgb(216,184,219,0.7)', 'rgb(173,207,240,0.8)', ]}";
         JSONObject obj=JSON.parseObject(lineStr);
         // System.out.println(obj);
         chartResult.setCode(200);

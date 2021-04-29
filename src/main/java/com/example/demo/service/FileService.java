@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.dao.CourseDao;
 import com.example.demo.dao.UserDao;
 import com.example.demo.entity.User;
 import com.example.demo.utils.ExcelImportUtil;
@@ -26,6 +27,8 @@ public class FileService {
     UserDao userDao;
     @Autowired
     PageUtil pageUtil;
+    @Autowired
+    CourseDao courseDao;
 
     public Result importFile(MultipartFile file, String coursename, String classname, String username) throws Exception {
         // 本地获得数据
@@ -36,13 +39,19 @@ public class FileService {
         String course0 = sumContent.getSheetName();
         course0 = coursename + "_" +classname + "_" +course0;
         sumContent.setSheetName(course0);
+
+        // 获得三种表名
+        List<String> threeTables = new ArrayList<>();
         for (int i = 0; i < 3; i ++) {
             List<SheetContent> subContent = allSubContent.get(i);
+            String temp = "";
             for (SheetContent sub: subContent) {
                 String course1 = sub.getSheetName();
                 course1 = coursename + "_" +classname + "_" +course1;
                 sub.setSheetName(course1);
+                temp = temp + course1 + ",";
             }
+            threeTables.add(temp);
         }
         // System.out.println(sumContent.getSheetContent());
         // System.out.println(sumContent.getSheetName());
@@ -74,6 +83,25 @@ public class FileService {
         // 更新user表
         String course = coursename + "_" +classname;
         sqlUtil.updateUser(course, username);
+
+        // 为方便后续查找 再创建一张表存储表名 Course
+//        int id;
+//        com.example.demo.entity.Course course2 = courseDao.findFirstByOrderByLastnameAsc();
+//        if(course2 == null) {
+//            id = 1;
+//        }
+//        else {
+//            id = course2.getId()+1;
+//        }
+
+        com.example.demo.entity.Course course1 = new com.example.demo.entity.Course();
+      //  course1.setId(id);
+        course1.setName(course);
+        course1.setLesson(threeTables.get(0));
+        course1.setReadiness(threeTables.get(1));
+        course1.setExam(threeTables.get(3));
+        courseDao.save(course1);
+
 
         if(importUtil == null) {
             return new Result(400);
