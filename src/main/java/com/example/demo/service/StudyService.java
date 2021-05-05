@@ -29,10 +29,10 @@ public class StudyService {
         for (Map<String,String> map: studentList) {
             //Object mapValue = map.values();
             List<String> mapValue = new ArrayList<String>(map.values());
+            mapValue.remove(1);     // 去掉姓名和学号
             mapValue.remove(0);
             argList.add(mapValue);
         }
-        // System.out.println(argList);
         // 查看错误
 //        String[] args1 = new String[] { "D:\\python\\python.exe", "C:\\Users\\Candelion\\Desktop\\Student\\sklearn_demo\\src\\KMeansModel.py", argList.toString()};
 //        Process process = Runtime.getRuntime().exec(args1);
@@ -137,12 +137,12 @@ public class StudyService {
         for (Map<String,String> map: studentList) {
             for (int i = 0; i < 4; i ++) {
                 if (map.get("类别").equals(String.valueOf(i))) {
-                    point[i] += Integer.parseInt(map.get(colName[2]));
-                    page[i] += Integer.parseInt(map.get(colName[3]));
-                    attendance[i] += Integer.parseInt(map.get(colName[4]));
-                    barrage[i] += Integer.parseInt(map.get(colName[6]));
-                    submission[i] += Integer.parseInt(map.get(colName[7]));
-                    announcement[i] += Integer.parseInt(map.get(colName[8]));
+                    point[i] += Integer.parseInt(map.get(colName[3]));
+                    page[i] += Integer.parseInt(map.get(colName[4]));
+                    attendance[i] += Integer.parseInt(map.get(colName[5]));
+                    barrage[i] += Integer.parseInt(map.get(colName[7]));
+                    submission[i] += Integer.parseInt(map.get(colName[8]));
+                    announcement[i] += Integer.parseInt(map.get(colName[9]));
                     cnt[i] ++;
                 }
             }

@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.xml.rpc.handler.HandlerChain;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -30,6 +31,28 @@ public class ExcelImportUtil {
         } else {
             wb = null;
         }
+    }
+
+    public List<List<String>> readExcelScore() {
+        sheet = wb.getSheetAt(0);
+        int rowNum = sheet.getLastRowNum();
+        List<String> list0 = new ArrayList<>();     // 学号
+        List<String> list1 = new ArrayList<>();     // 作业成绩
+        List<String> list2 = new ArrayList<>();     // 期末成绩
+        for(int i = 2; i < rowNum; i ++) {          // 从第二行开始
+            row = sheet.getRow(i);
+            String stuID = parseExcel(row.getCell(0));
+            String workScore = parseExcel(row.getCell(4));
+            String finalScore = parseExcel(row.getCell(5));
+            list0.add(stuID);
+            list1.add(workScore);
+            list2.add(finalScore);
+        }
+        List<List<String>> list = new ArrayList<>();
+        list.add(list0);
+        list.add(list1);
+        list.add(list2);
+        return list;
     }
 
     // 读取所有sub sheet内容  分成三类
@@ -149,7 +172,7 @@ public class ExcelImportUtil {
             for (int i = 2; i <= rowNum; i++) {              // 从第三行开始是数据
                 row = sheet.getRow(i);
                 Map<String, String> map = new LinkedHashMap<>();
-                for (int j = 0; j < 8; j++) {
+                for (int j = 0; j < 9; j++) {
                     String str = parseExcel(row.getCell(j));
                     map.put(headers[j], str);        // 每个表格的数据 键值对
                 }
@@ -171,7 +194,7 @@ public class ExcelImportUtil {
             sheet = wb.getSheetAt(0);
             row = sheet.getRow(1);
             headers = new String[8];        // 只获取汇总数据
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 9; i++) {
                 headers[i] = parseExcel(row.getCell(i));
                 // 加中括号转义不行 只能每种都规范
                 headers[i] = headers[i].replace("(", "_");

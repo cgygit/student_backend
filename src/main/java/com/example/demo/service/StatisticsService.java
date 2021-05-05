@@ -6,7 +6,8 @@ import com.example.demo.dao.CourseDao;
 import com.example.demo.entity.Course;
 import com.example.demo.utils.SqlUtil;
 import com.example.demo.vo.ChartResult;
-import com.example.demo.vo.ClassBarResult;
+import com.example.demo.vo.OneDataResult;
+import com.example.demo.vo.TwoDataResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -83,15 +84,16 @@ public class StatisticsService {
         return chartResult;
     }
 
-    public ClassBarResult getClassBar(String courseName) throws SQLException, ClassNotFoundException {
-        ClassBarResult classBarResult = new ClassBarResult();
-        classBarResult.setCode(200);
+    public TwoDataResult getClassBar(String courseName) throws SQLException, ClassNotFoundException {
+        TwoDataResult twoDataResult = new TwoDataResult();
+        twoDataResult.setCode(200);
 
         Course course = courseDao.findByName(courseName);
         String lesson = course.getLesson();
         lesson = lesson.substring(0, lesson.length()-1);  // 去掉最后的逗号
         String[] lessons = lesson.split(",");
         List<String> tableList = Arrays.asList(lessons);
+
 
         SqlUtil sqlUtil = new SqlUtil();
         List<List<Integer>> barDataList = sqlUtil.getBarDataOfClass(tableList);
@@ -112,9 +114,81 @@ public class StatisticsService {
 //
 //        JSONObject obj2=JSON.parseObject(bar2);
 
-        classBarResult.setAttendance(attandance);
-        classBarResult.setPoint(point);
+        twoDataResult.setData1(attandance);
+        twoDataResult.setData2(point);
 
-        return classBarResult;
+        return twoDataResult;
+    }
+
+    public TwoDataResult getBeforeClassLine(String courseName) throws SQLException, ClassNotFoundException {
+        TwoDataResult twoDataResult = new TwoDataResult();
+        twoDataResult.setCode(200);
+
+        Course course = courseDao.findByName(courseName);
+        String readiness = course.getReadiness();
+        readiness = readiness.substring(0, readiness.length()-1);  // 去掉最后的逗号
+        String[] readinesses = readiness.split(",");
+        List<String> tableList = Arrays.asList(readinesses);
+
+        SqlUtil sqlUtil = new SqlUtil();
+        List<List<Integer>> list = sqlUtil.getLineDataOfBeforeClass(tableList);
+        twoDataResult.setData1(list.get(0));
+        twoDataResult.setData2(list.get(1));
+
+        // 修改表名 作为x轴
+        List<String> tables = new ArrayList<>();
+        for(String table:tableList) {
+            String[] t = table.split("_");
+            table = t[2];
+            tables.add(table);
+        }
+        twoDataResult.setxAxis(tables);
+
+        return twoDataResult;
+    }
+
+    public TwoDataResult getBeforeClassBar(String courseName) throws SQLException, ClassNotFoundException {
+        TwoDataResult twoDataResult = new TwoDataResult();
+        twoDataResult.setCode(200);
+
+        Course course = courseDao.findByName(courseName);
+        String readiness = course.getReadiness();
+        readiness = readiness.substring(0, readiness.length()-1);  // 去掉最后的逗号
+        String[] readinesses = readiness.split(",");
+        List<String> tableList = Arrays.asList(readinesses);
+
+        SqlUtil sqlUtil = new SqlUtil();
+        List<List<Integer>> list = sqlUtil.getBarDataOfBeforeClass(tableList);
+        twoDataResult.setData1(list.get(0));
+        twoDataResult.setData2(list.get(1));
+
+        twoDataResult.setxAxis(null);
+
+        return twoDataResult;
+    }
+
+    public OneDataResult getExamLine(String courseName) throws SQLException, ClassNotFoundException {
+        OneDataResult oneDataResult = new OneDataResult();
+        oneDataResult.setCode(200);
+
+        Course course = courseDao.findByName(courseName);
+        String exam = course.getExam();
+        exam = exam.substring(0, exam.length()-1);  // 去掉最后的逗号
+        String[] exams = exam.split(",");
+        List<String> tableList = Arrays.asList(exams);
+
+        SqlUtil sqlUtil = new SqlUtil();
+        List<Integer> list = sqlUtil.getLineDataOfExam(tableList);
+        oneDataResult.setData(list);
+
+        List<String> tables = new ArrayList<>();
+        for(String table:tableList) {
+            String[] t = table.split("_");
+            table = t[2];
+            tables.add(table);
+        }
+        oneDataResult.setxAxis(tables);
+
+        return oneDataResult;
     }
 }

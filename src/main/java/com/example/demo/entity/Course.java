@@ -16,6 +16,7 @@ public class Course {
     String lesson;
     String readiness;
     String exam;
+    String score;
 
     public int getId() {
         return id;
@@ -55,6 +56,14 @@ public class Course {
 
     public void setReadiness(String readiness) {
         this.readiness = readiness;
+    }
+
+    public String getScore() {
+        return score;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
     }
 }
 

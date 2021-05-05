@@ -99,7 +99,7 @@ public class FileService {
         course1.setName(course);
         course1.setLesson(threeTables.get(0));
         course1.setReadiness(threeTables.get(1));
-        course1.setExam(threeTables.get(3));
+        course1.setExam(threeTables.get(2));
         courseDao.save(course1);
 
 
@@ -147,41 +147,52 @@ public class FileService {
 
     // 更新课程
     public Result updateFile(MultipartFile file, String course, String type) throws Exception {
-        ExcelImportUtil importUtil = new ExcelImportUtil(file);
-        SheetContent sumContent = importUtil.readExcelSumContent();
-        List<List<SheetContent>> allSubContent = importUtil.readExcelSubContent();
-
-        SqlUtil sqlUtil = new SqlUtil();
-        if (type.equals("替换")) {
-            // 删去原来的汇总 ；全部放进list  插入
-            List<String> tableNameList = new ArrayList<String>();
-            List<String[]> headersList = new ArrayList<String[]>();
-            List<List<Map<String, String>>> tableContentList = new ArrayList<List<Map<String, String>>>();
-
-            String course0 = sumContent.getSheetName();
-            course0 = course + "_" +course0;
-            tableNameList.add(course0);
-            headersList.add(sumContent.getHeaders());
-            tableContentList.add(sumContent.getSheetContent());
-
-            for (int i = 0; i < 3; i ++) {
-                List<SheetContent> subContent = allSubContent.get(i);
-                for (int j = 0; j < subContent.size(); j ++) {
-                    String tableName = subContent.get(j).getSheetName();
-                    tableName = course + "_" +tableName;
-                    String[] headers = subContent.get(j).getHeaders();
-                    List<Map<String, String>> tableContent = subContent.get(j).getSheetContent();
-                    tableNameList.add(tableName);
-                    headersList.add(headers);
-                    tableContentList.add(tableContent);
-                }
-            }
-
-            sqlUtil.updateByReplace(course, tableNameList, headersList, tableContentList);
+        if(type.equals("导入成绩")) {
+            ExcelImportUtil importUtil = new ExcelImportUtil(file);
+            List<List<String>> list = importUtil.readExcelScore();
+            SqlUtil sqlUtil = new SqlUtil();
+            sqlUtil.updateByAddScore(course,list);
+            // 更新course表
+            com.example.demo.entity.Course course1 = courseDao.findByName(course);
+            course1.setScore(course+"_成绩");
+            courseDao.save(course1);
         }
-        else if (type.equals("追加")) {
-            // 查到原来的汇总 ； 加上这个汇总 ； 插入子表
-            // todo
+        else {
+            ExcelImportUtil importUtil = new ExcelImportUtil(file);
+            SheetContent sumContent = importUtil.readExcelSumContent();
+            List<List<SheetContent>> allSubContent = importUtil.readExcelSubContent();
+
+            SqlUtil sqlUtil = new SqlUtil();
+            if (type.equals("替换")) {
+                // 删去原来的汇总 ；全部放进list  插入
+                List<String> tableNameList = new ArrayList<String>();
+                List<String[]> headersList = new ArrayList<String[]>();
+                List<List<Map<String, String>>> tableContentList = new ArrayList<List<Map<String, String>>>();
+
+                String course0 = sumContent.getSheetName();
+                course0 = course + "_" + course0;
+                tableNameList.add(course0);
+                headersList.add(sumContent.getHeaders());
+                tableContentList.add(sumContent.getSheetContent());
+
+                for (int i = 0; i < 3; i++) {
+                    List<SheetContent> subContent = allSubContent.get(i);
+                    for (int j = 0; j < subContent.size(); j++) {
+                        String tableName = subContent.get(j).getSheetName();
+                        tableName = course + "_" + tableName;
+                        String[] headers = subContent.get(j).getHeaders();
+                        List<Map<String, String>> tableContent = subContent.get(j).getSheetContent();
+                        tableNameList.add(tableName);
+                        headersList.add(headers);
+                        tableContentList.add(tableContent);
+                    }
+                }
+
+                sqlUtil.updateByReplace(course, tableNameList, headersList, tableContentList);
+            } else if (type.equals("追加")) {
+                // 查到原来的汇总 ； 加上这个汇总 ； 插入子表
+                // todo
+            }
         }
 
         return new Result(200);
