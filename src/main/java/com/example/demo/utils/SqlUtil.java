@@ -901,5 +901,110 @@ public class SqlUtil {
 
         return list;
     }
+
+    public List<List<Map<String,String>>> getClassList(List<String> tableList) throws ClassNotFoundException, SQLException {
+        // 连接数据库
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        List<List<Map<String,String>>> list = new ArrayList<>();    // 存所有表的学生们
+        for(String table:tableList) {
+            String sql = "select * from " + table + " ;";
+            ResultSet rs = stat.executeQuery(sql);
+            Result result = ResultSupport.toResult(rs);
+
+            List<Map<String,String>> students = new ArrayList<>();  // 存一张表的学生们
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+                // 对row进行处理 去掉后面的题目信息 保留关键信息
+                Map<String,String> student = new LinkedHashMap<>();         // 存一张表的一个学生
+                student.put("学号", row.get("学号").toString());
+                student.put("姓名", row.get("姓名").toString());
+                student.put("签到方式", row.get("签到方式").toString());
+                student.put("签到时间", row.get("签到时间").toString());
+                student.put("投稿次数", row.get("投稿次数").toString());
+                student.put("弹幕次数", row.get("弹幕次数").toString());
+                student.put("答题得分", row.get("累计得分").toString());
+                students.add(student);
+            }
+            list.add(students);
+        }
+
+        // 释放资源
+        stat.close();
+        conn.close();
+
+        return list;
+    }
+
+    public List<List<Map<String,String>>> getBeforeClassList(List<String> tableList) throws ClassNotFoundException, SQLException {
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        List<List<Map<String,String>>> list = new ArrayList<>();    // 存所有表的学生们
+        for(String table:tableList) {
+            String sql = "select * from " + table + " ;";
+            ResultSet rs = stat.executeQuery(sql);
+            Result result = ResultSupport.toResult(rs);
+            String[] colNames = result.getColumnNames();
+
+            List<Map<String,String>> students = new ArrayList<>();  // 存一张表的学生们
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+                // 对row进行处理 去掉后面的题目信息 保留关键信息
+                Map<String,String> student = new LinkedHashMap<>();         // 存一张表的一个学生
+                student.put("学号", row.get("学号").toString());
+                student.put("姓名", row.get("姓名").toString());
+                student.put(colNames[3], row.get(colNames[3]).toString());
+                student.put("总时长", row.get("总时长").toString());
+                student.put("完成时间", row.get("完成时间").toString());
+                if(student.size() > 7) {
+                    student.put(colNames[7], row.get(colNames[7]).toString());
+                }
+                students.add(student);
+            }
+            list.add(students);
+        }
+
+        stat.close();
+        conn.close();
+
+        return list;
+    }
+
+    public List<List<Map<String,String>>> getExamClassList(List<String> tableList) throws ClassNotFoundException, SQLException {
+        Class.forName(driver);
+        Connection conn = DriverManager.getConnection(url, userName, password);
+        Statement stat = conn.createStatement();
+
+        List<List<Map<String,String>>> list = new ArrayList<>();    // 存所有表的学生们
+        for(String table:tableList) {
+            String sql = "select * from " + table + " ;";
+            ResultSet rs = stat.executeQuery(sql);
+            Result result = ResultSupport.toResult(rs);
+            String[] colNames = result.getColumnNames();
+
+            List<Map<String,String>> students = new ArrayList<>();  // 存一张表的学生们
+            for (int i = 0; i < result.getRowCount(); i++) {
+                Map row = result.getRows()[i];
+                // 对row进行处理 去掉后面的题目信息 保留关键信息
+                Map<String,String> student = new LinkedHashMap<>();         // 存一张表的一个学生
+                student.put("学号", row.get("学号").toString());
+                student.put("姓名", row.get("姓名").toString());
+                student.put(colNames[3], row.get(colNames[3]).toString());
+                student.put("总用时", row.get("总用时").toString());
+                student.put("交卷时间", row.get("交卷时间").toString());
+                students.add(student);
+            }
+            list.add(students);
+        }
+
+        stat.close();
+        conn.close();
+
+        return list;
+    }
 }
 

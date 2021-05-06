@@ -6,6 +6,7 @@ import com.example.demo.dao.CourseDao;
 import com.example.demo.entity.Course;
 import com.example.demo.utils.SqlUtil;
 import com.example.demo.vo.ChartResult;
+import com.example.demo.vo.StatListResult;
 import com.example.demo.vo.OneDataResult;
 import com.example.demo.vo.TwoDataResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StatisticsService {
@@ -190,5 +192,179 @@ public class StatisticsService {
         oneDataResult.setxAxis(tables);
 
         return oneDataResult;
+    }
+
+    public StatListResult getClassList(String courseName, int num,String stuID,String stuName,String attendType,String submission,String barrage,String point, int pagenum, int pagesize) throws SQLException, ClassNotFoundException {
+        StatListResult statListResult = new StatListResult();
+        statListResult.setCode(200);
+
+        // 获得所有的课堂情况表名
+        Course course = courseDao.findByName(courseName);
+        String lesson = course.getLesson();
+        lesson = lesson.substring(0, lesson.length()-1);
+        String[] lessons = lesson.split(",");
+        List<String> tableList = Arrays.asList(lessons);
+        int total = tableList.size();
+        statListResult.setTotal(total);
+
+        // 获得所有课堂情况的表
+        SqlUtil sqlUtil = new SqlUtil();
+        List<List<Map<String,String>>> list = sqlUtil.getClassList(tableList);
+
+        // 获得第几张表 注意num比下标多1
+        List<Map<String,String>> students = list.get(num-1);
+
+        // 过滤器
+        if(!stuID.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("学号").equals(stuID)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!stuName.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("姓名").equals(stuName)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!attendType.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("签到方式").equals(attendType)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!submission.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(Integer.parseInt(student.get("投稿次数")) >= Integer.parseInt(submission)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!barrage.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(Integer.parseInt(student.get("弹幕次数")) >= Integer.parseInt(barrage)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!point.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(Integer.parseInt(student.get("答题得分")) >= Integer.parseInt(point)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        statListResult.setStudents(students);
+
+        return statListResult;
+    }
+
+    public StatListResult getBeforeClassList(String courseName,int num,String stuID,String stuName,String page,String totalTime,String endTime,String point,int pagenum,int pagesize) throws SQLException, ClassNotFoundException {
+        StatListResult statListResult = new StatListResult();
+        statListResult.setCode(200);
+
+        Course course = courseDao.findByName(courseName);
+        String readiness = course.getReadiness();
+        readiness = readiness.substring(0, readiness.length()-1);
+        String[] readinesses = readiness.split(",");
+        List<String> tableList = Arrays.asList(readinesses);
+        int total = tableList.size();
+        statListResult.setTotal(total);
+
+        SqlUtil sqlUtil = new SqlUtil();
+        List<List<Map<String,String>>> list = sqlUtil.getBeforeClassList(tableList);
+        List<Map<String,String>> students = list.get(num-1);
+
+        if(!stuID.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("学号").equals(stuID)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!stuName.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("姓名").equals(stuName)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!page.isEmpty()) {
+            for(Map<String,String> student:students) {
+                // 观看总页数_共xx页 在我构建的有序map中为2
+                if(Integer.parseInt(student.get(2)) >= Integer.parseInt(page)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!point.isEmpty()) {
+            for(Map<String,String> student:students) {
+                // 要有答题得分才能比 没有的不管  有答题得分即student.size()>5
+                if(student.size() <= 5) {
+                    students.remove(student);
+                }
+                else if(Integer.parseInt(student.get(5)) >= Integer.parseInt(point)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        return statListResult;
+    }
+
+    public StatListResult getExamClassList(String courseName,int num,String stuID,String stuName,String point,String totalTime,String endTime,int pagenum,int pagesize) throws SQLException, ClassNotFoundException {
+        StatListResult statListResult = new StatListResult();
+        statListResult.setCode(200);
+
+        Course course = courseDao.findByName(courseName);
+        String exam = course.getReadiness();
+        exam = exam.substring(0, exam.length()-1);
+        String[] exams = exam.split(",");
+        List<String> tableList = Arrays.asList(exams);
+        int total = tableList.size();
+        statListResult.setTotal(total);
+
+        SqlUtil sqlUtil = new SqlUtil();
+        List<List<Map<String,String>>> list = sqlUtil.getExamClassList(tableList);
+        List<Map<String,String>> students = list.get(num-1);
+
+        if(!stuID.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("学号").equals(stuID)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!stuName.isEmpty()) {
+            for(Map<String,String> student:students) {
+                if(!student.get("姓名").equals(stuName)){
+                    students.remove(student);
+                }
+            }
+        }
+
+        if(!point.isEmpty()) {
+            for(Map<String,String> student:students) {
+                // 得分_共xx分 在我构建的有序map中为2
+                if(Integer.parseInt(student.get(2)) >= Integer.parseInt(point)) {
+                    students.remove(student);
+                }
+            }
+        }
+
+        return statListResult;
     }
 }
