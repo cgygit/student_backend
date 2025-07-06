@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
-import com.example.demo.pojo.User;
-import com.example.demo.result.Result;
+import com.example.demo.entity.User;
+import com.example.demo.vo.Result;
 import com.example.demo.service.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
